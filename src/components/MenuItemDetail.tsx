@@ -108,6 +108,24 @@ export default function MenuItemDetail({ item, onClose }: MenuItemDetailProps) {
                                 </div>
                             )}
 
+                            {item.ingredients && (
+                                <div className="mt-6">
+                                    <h4 className="text-sm font-semibold text-foreground mb-3 uppercase tracking-wider">
+                                        Ingredients
+                                    </h4>
+                                    <div className="flex flex-wrap gap-2">
+                                        {item.ingredients.map((ingredient, index) => (
+                                            <span 
+                                                key={index}
+                                                className="px-3 py-1 bg-secondary/50 text-secondary-foreground rounded-full text-sm font-medium"
+                                            >
+                                                {ingredient}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Additional Info or CTA */}
                             <div className="mt-8 pt-6 border-t border-border">
                                 <button

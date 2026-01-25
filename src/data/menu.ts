@@ -2,6 +2,7 @@ export interface MenuItem {
     id: string;
     name: string;
     description?: string;
+    ingredients?: string[];
     price: number;
     image?: string;
     popular?: boolean;
@@ -22,7 +23,14 @@ export const menuData: Category[] = [
             { id: "mc-2", name: "Nasi Kulit", price: 20000, image: "https://placehold.co/400x300/1a1a1a/D4AF37?text=Nasi+Kulit" },
             { id: "mc-3", name: "Nasi Brokoli", price: 15000, image: "https://placehold.co/400x300/1a1a1a/D4AF37?text=Nasi+Brokoli" },
             { id: "mc-4", name: "Nasi Brokoli Seafood", price: 29000, image: "https://placehold.co/400x300/1a1a1a/D4AF37?text=Nasi+Brokoli+Seafood" },
-            { id: "mc-5", name: "Nasi Capcay", description: "Goreng / Kuah", price: 23000, image: "https://placehold.co/400x300/1a1a1a/D4AF37?text=Nasi+Capcay" },
+            {
+                id: "mc-5",
+                name: "Nasi Capcay",
+                description: "Goreng / Kuah",
+                price: 23000,
+                image: "https://placehold.co/400x300/1a1a1a/D4AF37?text=Nasi+Capcay",
+                ingredients: ["Nasi", "Wortel", "Brokoli", "Kembang Kol", "Sawi", "Bakso", "Ayam"]
+            },
             { id: "mc-6", name: "Nasi Capcay Seafood", description: "Goreng / Kuah", price: 29000, image: "https://placehold.co/400x300/1a1a1a/D4AF37?text=Nasi+Capcay+Seafood" },
             { id: "mc-7", name: "Nasi Spicy Chicken Wings", price: 29000, image: "https://placehold.co/400x300/1a1a1a/D4AF37?text=Nasi+Spicy+Chicken+Wings" },
             { id: "mc-8", name: "Nasi Ayam Geprek", price: 22500, image: "https://placehold.co/400x300/1a1a1a/D4AF37?text=Nasi+Ayam+Geprek" },
@@ -31,7 +39,13 @@ export const menuData: Category[] = [
             { id: "mc-11", name: "Nasi Ayam Bakar", price: 27000, image: "https://placehold.co/400x300/1a1a1a/D4AF37?text=Nasi+Ayam+Bakar" },
             { id: "mc-12", name: "Nasi Ayam Panggang Madu", price: 28000, image: "https://placehold.co/400x300/1a1a1a/D4AF37?text=Nasi+Ayam+Panggang" },
             { id: "mc-13", name: "Nasi Soup Sosis", price: 17500, image: "https://placehold.co/400x300/1a1a1a/D4AF37?text=Nasi+Soup+Sosis" },
-            { id: "mc-14", name: "Nasi Soup Tomyum", price: 33000, image: "https://placehold.co/400x300/1a1a1a/D4AF37?text=Nasi+Soup+Tomyum" },
+            {
+                id: "mc-14",
+                name: "Nasi Soup Tomyum",
+                price: 33000,
+                image: "https://placehold.co/400x300/1a1a1a/D4AF37?text=Nasi+Soup+Tomyum",
+                ingredients: ["Nasi", "Udang", "Cumi", "Jamur", "Sereh", "Daun Jeruk", "Jeruk Nipis"]
+            },
             { id: "mc-15", name: "Nasi Soup Iga Bakar", price: 42500, image: "https://placehold.co/400x300/1a1a1a/D4AF37?text=Nasi+Soup+Iga+Bakar" },
             { id: "mc-16", name: "Nasi Soup Iga Kuah", price: 42500, image: "https://placehold.co/400x300/1a1a1a/D4AF37?text=Nasi+Soup+Iga+Kuah" },
             { id: "mc-17", name: "Original Chicken Wings", price: 20000, image: "https://placehold.co/400x300/1a1a1a/D4AF37?text=Chicken+Wings" },
@@ -65,7 +79,14 @@ export const menuData: Category[] = [
         items: [
             { id: "ng-1", name: "Nasi Goreng Singapore", price: 25000, image: "https://placehold.co/400x300/1a1a1a/D4AF37?text=Nasi+Goreng+Singapore" },
             { id: "ng-2", name: "Nasi Goreng Ayam", price: 26000, image: "https://placehold.co/400x300/1a1a1a/D4AF37?text=Nasi+Goreng+Ayam" },
-            { id: "ng-3", name: "Nasi Goreng Spesial Xtreme", price: 27000, popular: true, image: "https://placehold.co/400x300/1a1a1a/D4AF37?text=Nasi+Goreng+Xtreme" },
+            {
+                id: "ng-3",
+                name: "Nasi Goreng Spesial Xtreme",
+                price: 27000,
+                popular: true,
+                image: "https://placehold.co/400x300/1a1a1a/D4AF37?text=Nasi+Goreng+Xtreme",
+                ingredients: ["Nasi", "Telur", "Ayam Suwir", "Bakso", "Sosis", "Ati Ampela", "Sayuran", "Kerupuk", "Acar"]
+            },
             { id: "ng-4", name: "Nasi Goreng Ati Empela", price: 30000, image: "https://placehold.co/400x300/1a1a1a/D4AF37?text=Nasi+Goreng+Ati" },
             { id: "ng-5", name: "Nasi Goreng Gila", price: 31000, image: "https://placehold.co/400x300/1a1a1a/D4AF37?text=Nasi+Goreng+Gila" },
             { id: "ng-6", name: "Nasi Goreng Mawut", price: 32000, image: "https://placehold.co/400x300/1a1a1a/D4AF37?text=Nasi+Goreng+Mawut" },
