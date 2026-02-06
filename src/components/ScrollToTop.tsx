@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useShop } from "@/context/ShopContext";
 
 export default function ScrollToTop() {
     const [isVisible, setIsVisible] = useState(false);
+    const { cartCount } = useShop();
 
     useEffect(() => {
         const toggleVisibility = () => {
@@ -31,10 +33,14 @@ export default function ScrollToTop() {
             {isVisible && (
                 <motion.button
                     initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
+                    animate={{ 
+                        opacity: 1, 
+                        scale: 1,
+                        bottom: cartCount > 0 ? "6.3rem" : "1.5rem" // Moved up slightly more
+                    }}
                     exit={{ opacity: 0, scale: 0.8 }}
                     onClick={scrollToTop}
-                    className="fixed bottom-6 right-6 z-50 p-3 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                    className="fixed right-6 z-30 p-3 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                     whileHover={{ y: -3 }}
                     whileTap={{ scale: 0.9 }}
                     aria-label="Scroll to top"

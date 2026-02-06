@@ -8,6 +8,7 @@ import MenuItemCard from "@/components/MenuItemCard";
 import ScrollToTop from "@/components/ScrollToTop";
 import MenuItemDetail from "@/components/MenuItemDetail";
 import SearchFilter from "@/components/SearchFilter";
+import FloatingCart from "@/components/FloatingCart";
 import { MenuItem, Category } from "@/data/menu";
 
 export default function Home() {
@@ -156,6 +157,7 @@ export default function Home() {
         item={selectedItem}
         onClose={() => setSelectedItem(null)}
       />
+      <FloatingCart />
     </div>
   );
 }

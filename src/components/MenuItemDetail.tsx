@@ -3,7 +3,9 @@
 import { MenuItem } from "@/data/menu";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { useEffect } from "react";
+import { Heart, Minus, Plus, ShoppingCart } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useShop } from "@/context/ShopContext";
 
 interface MenuItemDetailProps {
     item: MenuItem | null;
@@ -11,6 +13,14 @@ interface MenuItemDetailProps {
 }
 
 export default function MenuItemDetail({ item, onClose }: MenuItemDetailProps) {
+    const { addToCart, toggleFavorite, isFavorite } = useShop();
+    const [quantity, setQuantity] = useState(1);
+
+    // Reset quantity when item changes
+    useEffect(() => {
+        setQuantity(1);
+    }, [item]);
+
     // Prevent body scroll when modal is open
     useEffect(() => {
         if (item) {
@@ -50,7 +60,7 @@ export default function MenuItemDetail({ item, onClose }: MenuItemDetailProps) {
                         animate={{ y: 0 }}
                         exit={{ y: "100%" }}
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                        className="fixed inset-x-0 bottom-0 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 z-50 max-w-md w-full md:w-[480px] bg-card border-t md:border border-border rounded-t-3xl md:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] md:max-h-[85vh]"
+                        className="fixed inset-x-0 bottom-0 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 z-50 max-w-md w-full md:w-120 bg-card border-t md:border border-border rounded-t-3xl md:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] md:max-h-[85vh]"
                     >
                         {/* Drag Handle (Mobile Visual Only) */}
                         <div className="md:hidden w-full flex justify-center pt-3 pb-1 absolute top-0 z-20">
@@ -125,14 +135,58 @@ export default function MenuItemDetail({ item, onClose }: MenuItemDetailProps) {
                                     </div>
                                 </div>
                             )}
+                        </div>
 
-                            {/* Additional Info or CTA */}
-                            <div className="mt-8 pt-6 border-t border-border">
+                        {/* Actions */}
+                        <div className="p-6 border-t border-border bg-card flex flex-col gap-4 z-10">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3 bg-secondary/30 rounded-lg p-1">
+                                    <button
+                                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                        className="p-2 hover:bg-secondary rounded-md transition-colors disabled:opacity-50"
+                                        disabled={quantity <= 1}
+                                    >
+                                        <Minus className="w-4 h-4" />
+                                    </button>
+                                    <span className="font-semibold w-8 text-center">{quantity}</span>
+                                    <button
+                                        onClick={() => setQuantity(quantity + 1)}
+                                        className="p-2 hover:bg-secondary rounded-md transition-colors"
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                    </button>
+                                </div>
+                                <div className="text-lg font-bold text-primary">
+                                    {item && formatPrice(item.price * quantity)}
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3">
                                 <button
-                                    onClick={onClose}
-                                    className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold text-lg hover:bg-primary/90 transition-colors active:scale-[0.98]"
+                                    onClick={() => item && toggleFavorite(item.id)}
+                                    className={`p-3.5 rounded-xl border transition-colors active:scale-95 flex items-center justify-center ${
+                                        item && isFavorite(item.id)
+                                            ? "border-red-500 bg-red-50 text-red-500"
+                                            : "border-border text-muted-foreground hover:bg-secondary hover:text-foreground"
+                                    }`}
                                 >
-                                    Close
+                                    <Heart
+                                        className="h-5 w-5"
+                                        fill={item && isFavorite(item.id) ? "currentColor" : "none"}
+                                    />
+                                </button>
+
+                                <button
+                                    onClick={() => {
+                                        if (item) {
+                                            addToCart(item, quantity);
+                                            onClose();
+                                        }
+                                    }}
+                                    className="flex-1 py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold text-lg hover:bg-primary/90 transition-colors active:scale-[0.98] flex items-center justify-center gap-2"
+                                >
+                                    <ShoppingCart className="w-5 h-5" />
+                                    Add to Cart
                                 </button>
                             </div>
                         </div>
