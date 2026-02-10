@@ -10,7 +10,7 @@ export default function MenuItemCard({ item, onClick }: { item: MenuItem; onClic
             style: "currency",
             currency: "IDR",
             minimumFractionDigits: 0,
-        }).format(price);
+        }).format(price).replace("Rp", "");
     };
 
     return (
@@ -19,48 +19,60 @@ export default function MenuItemCard({ item, onClick }: { item: MenuItem; onClic
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-50px" }}
-            whileHover={{ y: -5, scale: 1.02 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="group relative overflow-hidden p-3 rounded-xl bg-card border border-border/60 hover:border-primary/40 shadow-sm hover:shadow-xl transition-all flex flex-col gap-3 cursor-pointer h-full"
+            whileHover={{ y: -4 }}
+            className="group relative bg-[#0a0a0a] border border-white/5 overflow-hidden cursor-pointer"
         >
-            {item.image ? (
-                <div className="w-full aspect-[4/3] relative rounded-lg overflow-hidden border border-border/50 bg-secondary/30">
+            {/* Image Section */}
+            <div className="relative aspect-[4/3] overflow-hidden bg-white/5">
+                {item.image ? (
                     <Image
                         src={item.image}
                         alt={item.name}
                         fill
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        className="object-cover transition-transform duration-700 group-hover:scale-110"
+                        className="object-cover transition-transform duration-700 group-hover:scale-110 grayscale-[30%] group-hover:grayscale-0"
                     />
-                </div>
-            ) : null}
-
-            <div className="flex-1 flex flex-col justify-between">
-                <div className="space-y-1.5">
-                    <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-medium text-base leading-snug text-foreground group-hover:text-primary transition-colors duration-300 line-clamp-2">
-                            {item.name}
-                        </h3>
+                ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-white/10 font-display text-4xl font-bold">
+                        XM
                     </div>
-                    {item.popular && (
-                        <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-primary border border-primary/20 px-1.5 py-0.5 rounded-sm bg-primary/5">
-                            Popular
-                        </span>
-                    )}
-                    {item.description && (
-                        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 group-hover:text-muted-foreground/80">
-                            {item.description}
-                        </p>
-                    )}
-                </div>
+                )}
+                
+                {/* Popular Badge */}
+                {item.popular && (
+                    <div className="absolute top-0 right-0 bg-primary text-black text-[10px] font-bold tracking-widest uppercase px-3 py-1 z-10">
+                        Star
+                    </div>
+                )}
 
-                <div className="font-semibold text-primary text-right mt-3 text-sm sm:text-base">
-                    {formatPrice(item.price)}
-                </div>
+                {/* Overlay Gradient */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent opacity-80" />
             </div>
 
-            {/* Decorative gradient on hover */}
-            <div className="absolute inset-0 bg-gradient-to-t from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+            {/* Content Section */}
+            <div className="relative p-5 -mt-8">
+                <div className="flex justify-between items-end mb-2">
+                    <h3 className="font-display text-lg leading-tight text-white group-hover:text-primary transition-colors duration-300 w-3/4">
+                        {item.name}
+                    </h3>
+                    <span className="font-mono text-primary text-lg">
+                        <span className="text-xs align-top opacity-50 mr-1">IDR</span>
+                        {formatPrice(item.price)}
+                    </span>
+                </div>
+                
+                <p className="text-xs text-white/40 font-body leading-relaxed line-clamp-2 mb-4 group-hover:text-white/70 transition-colors">
+                    {item.description || "Premium selection, chef's recommendation."}
+                </p>
+
+                {/* Add Button Mockup */}
+                <div className="w-full h-[1px] bg-white/10 group-hover:bg-primary/50 transition-colors mt-4 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-primary w-0 group-hover:w-full transition-all duration-500 ease-out" />
+                </div>
+                <div className="flex justify-between items-center mt-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-2 group-hover:translate-y-0">
+                    <span className="text-[10px] uppercase tracking-widest text-primary">Add to Order</span>
+                    <span className="text-primary text-lg leading-none">+</span>
+                </div>
+            </div>
         </motion.div>
     );
 }

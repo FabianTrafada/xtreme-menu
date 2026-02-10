@@ -1,57 +1,26 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Syne, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import SmoothScroll from "@/components/SmoothScroll";
 import Script from "next/script";
 import { ShopProvider } from "@/context/ShopContext";
+import { MenuProvider } from "@/context/MenuContext";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const syne = Syne({
+  variable: "--font-syne",
   subsets: ["latin"],
+  weight: ["400", "700", "800"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600"],
 });
 
 export const metadata: Metadata = {
   title: "X-treme Shoot Billiard & Cafe | Premium Menu",
-  description: "Explore our delicious menu at X-treme Shoot Billiard & Cafe. Premium billiard tables, great food, and refreshing drinks in Purwokerto.",
-  keywords: ["X-treme Shoot Billiard", "Billiard Purwokerto", "Cafe Purwokerto", "Tempat Nongkrong Purwokerto", "Menu Makanan", "Billiard & Cafe", "Kuliner Purwokerto"],
-  openGraph: {
-    title: "X-treme Shoot Billiard & Cafe | Premium Menu",
-    description: "Premium Billiard Experience & Delicious Eats. Check out our digital menu.",
-    url: "https://xtreme-menu.vercel.app",
-    siteName: "X-treme Shoot Billiard & Cafe",
-    images: [
-      {
-        url: "/hero-bg.png",
-        width: 1200,
-        height: 630,
-        alt: "X-treme Shoot Billiard & Cafe",
-      },
-    ],
-    locale: "id_ID",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "X-treme Shoot Billiard & Cafe | Premium Menu",
-    description: "Premium Billiard Experience & Delicious Eats in Purwokerto.",
-    images: ["/hero-bg.png"],
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-    },
-  },
+  description: "Experience the premium taste of victory.",
 };
 
 export default function RootLayout({
@@ -59,45 +28,19 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Cafe",
-    name: "X-treme Shoot Billiard & Cafe",
-    image: "https://xtreme-menu.vercel.app/hero-bg.png",
-    url: "https://xtreme-menu.vercel.app",
-    menu: "https://xtreme-menu.vercel.app",
-    servesCuisine: "Indonesian, Western, Snacks",
-    priceRange: "$$",
-    address: {
-      "@type": "PostalAddress",
-      streetAddress: "Jl. Profesor DR. HR Boenyamin",
-      addressLocality: "Purwokerto Utara",
-      addressRegion: "Jawa Tengah",
-      postalCode: "53122",
-      addressCountry: "ID"
-    },
-    geo: {
-      "@type": "GeoCoordinates",
-      latitude: -7.403963, 
-      longitude: 109.244437
-    },
-    description: "Premium Billiard Experience & Delicious Eats in Purwokerto. Enjoy our wide range of food and beverages while playing.",
-  };
-
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${syne.variable} ${spaceGrotesk.variable} antialiased bg-background text-foreground overflow-x-hidden`}
       >
-        <Script
-          id="json-ld"
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-        <SmoothScroll />
-        <ShopProvider>
-          {children}
-        </ShopProvider>
+        <div className="fixed inset-0 z-[-1] bg-[url('/noise.png')] opacity-[0.03] pointer-events-none mix-blend-overlay"></div>
+        <div className="fixed inset-0 z-[-2] bg-gradient-to-br from-background via-[#0a0a0a] to-[#050505]"></div>
+        
+        <MenuProvider>
+          <ShopProvider>
+            {children}
+          </ShopProvider>
+        </MenuProvider>
       </body>
     </html>
   );
