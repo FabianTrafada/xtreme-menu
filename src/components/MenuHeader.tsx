@@ -50,7 +50,7 @@ export default function MenuHeader() {
                     transition={{ duration: 0.8, ease: "circOut" }}
                     className="text-6xl md:text-8xl lg:text-9xl font-black tracking-tighter text-white leading-[0.85] mb-4"
                 >
-                    XTREME <br />
+                    X-TREME <br />
                     <span className="text-transparent bg-clip-text bg-gradient-to-br from-[#FBD786] via-[#C6A059] to-[#87642E]">
                         MENU
                     </span>

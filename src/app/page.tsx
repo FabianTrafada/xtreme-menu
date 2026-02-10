@@ -77,7 +77,7 @@ export default function Home() {
   if (isLoading) {
     return (
       <div className="h-screen w-screen bg-background flex items-center justify-center">
-        <div className="text-primary font-display text-2xl tracking-widest animate-pulse">XTREME LOADING...</div>
+        <div className="text-primary font-display text-2xl tracking-widest animate-pulse">X-TREME LOADING...</div>
       </div>
     );
   }
