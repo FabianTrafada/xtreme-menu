@@ -258,12 +258,14 @@ export default function ImageUpload({ value, onChange, aspect = 16 / 9, onAspect
               <h3 className="font-display text-sm tracking-[0.2em] uppercase text-white/60">Adjust Image</h3>
               <div className="flex gap-4">
                 <button
+                  type="button"
                   onClick={() => setImageToCrop(null)}
                   className="p-2 text-white/40 hover:text-white transition-colors"
                 >
                   <IconX />
                 </button>
                 <button
+                  type="button"
                   onClick={handleCropSave}
                   className="p-2 text-primary hover:scale-110 transition-transform"
                 >
@@ -319,6 +321,7 @@ export default function ImageUpload({ value, onChange, aspect = 16 / 9, onAspect
               </div>
 
               <button
+                type="button"
                 onClick={handleCropSave}
                 className="w-full py-4 bg-primary text-black font-display text-sm font-bold tracking-[0.2em] uppercase active:scale-[0.98] transition-all"
               >
