@@ -80,6 +80,11 @@ export default function ImageUpload({ value, onChange, aspect = 16 / 9, onAspect
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Reset cropper state for the new image
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+    setCroppedAreaPixels(null);
+
     const reader = new FileReader();
     reader.addEventListener("load", () => {
       setImageToCrop(reader.result as string);
@@ -93,6 +98,10 @@ export default function ImageUpload({ value, onChange, aspect = 16 / 9, onAspect
   const handleEditExisting = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (value) {
+      // Reset cropper state for clean re-edit
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
+      setCroppedAreaPixels(null);
       setImageToCrop(value);
     }
   };
@@ -100,11 +109,15 @@ export default function ImageUpload({ value, onChange, aspect = 16 / 9, onAspect
   const handleCropSave = async () => {
     if (!imageToCrop || !croppedAreaPixels) return;
 
+    // Capture current values before any state changes
+    const currentImage = imageToCrop;
+    const currentCrop = croppedAreaPixels;
+
     try {
       setIsUploading(true);
       setImageToCrop(null);
 
-      const croppedImageBlob = await getCroppedImg(imageToCrop, croppedAreaPixels);
+      const croppedImageBlob = await getCroppedImg(currentImage, currentCrop);
       if (!croppedImageBlob) throw new Error("Could not crop image");
 
       const file = new File([croppedImageBlob], `cropped-${Date.now()}.jpg`, { type: "image/jpeg" });

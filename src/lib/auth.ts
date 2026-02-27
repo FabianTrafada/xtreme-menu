@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "010201";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "061225";
 
 /**
  * Verify the admin password from the Authorization header.

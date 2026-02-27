@@ -274,7 +274,7 @@ export default function AdminPage() {
   const activeCategory = categories.find((c) => c.id === activeCategoryId) || null;
   const formatPrice = (p: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(p).replace("Rp", "");
 
-  const handleLogin = (e: React.FormEvent) => { e.preventDefault(); if (password === "010201") { setIsAuthenticated(true); setError(""); } else { setError("Access denied"); setPassword(""); } };
+  const handleLogin = (e: React.FormEvent) => { e.preventDefault(); if (password === "061225") { setIsAuthenticated(true); setError(""); } else { setError("Access denied"); setPassword(""); } };
 
   const handleAddCategory = async (name: string) => { await addCategory({ id: name.toLowerCase().replace(/\s+/g, "-") + "-" + Date.now(), name, items: [] }); setToast("Category created"); };
   const handleAddItem = async (catId: string, item: MenuItem) => { await addMenuItem(catId, item); setToast("Item created"); };

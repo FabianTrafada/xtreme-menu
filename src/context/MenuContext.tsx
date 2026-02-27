@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { Category, MenuItem } from "@/data/menu";
 
-const ADMIN_PASSWORD = "010201";
+const ADMIN_PASSWORD = "061225";
 
 function authHeaders(): Record<string, string> {
   return {
