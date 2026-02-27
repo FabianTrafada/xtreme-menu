@@ -51,17 +51,9 @@ export default function ImageUpload({ value, onChange, aspect = 16 / 9, onAspect
   const { startUpload } = useUploadThing("imageUploader", {
     onUploadProgress: (p) => setProgress(p),
     onClientUploadComplete: (res) => {
-      console.log("[ImageUpload] Full upload response:", JSON.stringify(res));
-      if (res?.[0]) {
-        // Try multiple possible URL locations
-        const uploadedUrl = res[0].ufsUrl || res[0].url || (res[0].serverData as any)?.url;
-        console.log("[ImageUpload] Using URL:", uploadedUrl);
-        if (uploadedUrl) {
-          onChange(uploadedUrl);
-        }
-      }
-      setIsUploading(false);
-      setProgress(0);
+      console.log("[ImageUpload] Upload complete:", JSON.stringify(res));
+      // Note: Don't call onChange/setIsUploading here — handleCropSave handles everything
+      // after startUpload resolves. Doing it here too causes a race condition.
     },
     onUploadError: (err) => {
       console.error("[ImageUpload] Upload error:", err);

@@ -143,9 +143,9 @@ function CreateSheet({ open, onClose, categories, onSaveCategory, onSaveItem }: 
                         </div>
                         <ImageUpload
                           value={itemForm.image || ""}
-                          onChange={(url) => setItemForm({ ...itemForm, image: url })}
+                          onChange={(url) => setItemForm(prev => ({ ...prev, image: url }))}
                           aspect={itemForm.imageAspectRatio}
-                          onAspectChange={(aspect) => setItemForm({ ...itemForm, imageAspectRatio: aspect })}
+                          onAspectChange={(aspect) => setItemForm(prev => ({ ...prev, imageAspectRatio: aspect }))}
                         />
                         <button type="button" onClick={() => setItemForm({ ...itemForm, popular: !itemForm.popular })}
                           className={`w-full flex items-center justify-between px-4 py-4 border transition-all ${itemForm.popular ? "bg-primary/10 border-primary/40" : "bg-[#0e0e0e] border-white/10"}`}
@@ -230,9 +230,9 @@ function EditItemSheet({ item, categoryId, onClose, onSave, onDelete }: {
                 </div>
                 <ImageUpload
                   value={form.image || ""}
-                  onChange={(url) => setForm({ ...form, image: url })}
+                  onChange={(url) => setForm(prev => ({ ...prev, image: url }))}
                   aspect={form.imageAspectRatio}
-                  onAspectChange={(aspect) => setForm({ ...form, imageAspectRatio: aspect })}
+                  onAspectChange={(aspect) => setForm(prev => ({ ...prev, imageAspectRatio: aspect }))}
                 />
                 <div>
                   <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-white/40 mb-2">Description</label>
