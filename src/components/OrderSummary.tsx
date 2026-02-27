@@ -15,12 +15,6 @@ const LIST_KEY = "xtreme-menu:list";
 export default function OrderSummary({ isOpen, onClose }: OrderSummaryProps) {
     const [listItems, setListItems] = useState<MenuItem[]>([]);
 
-    useEffect(() => {
-        if (isOpen) {
-            loadItems();
-        }
-    }, [isOpen]);
-
     const loadItems = () => {
         try {
             const raw = window.localStorage.getItem(LIST_KEY);
@@ -39,6 +33,13 @@ export default function OrderSummary({ isOpen, onClose }: OrderSummaryProps) {
             setListItems([]);
         }
     };
+
+    useEffect(() => {
+        if (isOpen) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            loadItems();
+        }
+    }, [isOpen]);
 
     const removeItem = (id: string) => {
         const nextItems = listItems.filter(item => item.id !== id);

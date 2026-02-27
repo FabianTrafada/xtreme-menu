@@ -29,7 +29,16 @@ export async function initDb() {
       price INTEGER NOT NULL DEFAULT 0,
       image TEXT,
       popular BOOLEAN DEFAULT FALSE,
-      ingredients TEXT[]
+      ingredients TEXT[],
+      image_aspect_ratio REAL DEFAULT 1.777
     )
   `;
+
+  // Ensure column exists for existing tables
+  try {
+    await sql`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS image_aspect_ratio REAL DEFAULT 1.777`;
+  } catch (e) {
+    // Column might already exist or other DB issues, ignore in this simple setup
+    console.log("Migration check:", e);
+  }
 }

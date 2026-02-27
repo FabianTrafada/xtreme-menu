@@ -24,8 +24,8 @@ export async function POST(req: NextRequest) {
 
       for (const item of cat.items) {
         await sql`
-          INSERT INTO menu_items (id, category_id, name, description, price, image, popular, ingredients)
-          VALUES (${item.id}, ${cat.id}, ${item.name}, ${item.description || null}, ${item.price}, ${item.image || null}, ${item.popular || false}, ${item.ingredients || null})
+          INSERT INTO menu_items (id, category_id, name, description, price, image, popular, ingredients, image_aspect_ratio)
+          VALUES (${item.id}, ${cat.id}, ${item.name}, ${item.description || null}, ${item.price}, ${item.image || null}, ${item.popular || false}, ${item.ingredients || null}, ${item.imageAspectRatio || 1.777})
         `;
       }
     }

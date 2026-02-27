@@ -12,7 +12,7 @@ export async function GET() {
     `;
 
     const items = await sql`
-      SELECT id, category_id, name, description, price, image, popular, ingredients
+      SELECT id, category_id, name, description, price, image, popular, ingredients, image_aspect_ratio
       FROM menu_items ORDER BY name ASC
     `;
 
@@ -30,6 +30,7 @@ export async function GET() {
           image: item.image || undefined,
           popular: item.popular || false,
           ingredients: item.ingredients || undefined,
+          imageAspectRatio: item.image_aspect_ratio || 1.777,
         })),
     }));
 

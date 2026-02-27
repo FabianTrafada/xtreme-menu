@@ -8,11 +8,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import ImageUpload from "@/components/ImageUpload";
 
 // --- Icons ---
-const IconPlus = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>;
-const IconX = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>;
-const IconTrash = () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>;
-const IconBack = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>;
-const IconArrow = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>;
+const IconPlus = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>;
+const IconX = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>;
+const IconTrash = () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>;
+const IconBack = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" /></svg>;
+const IconArrow = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>;
 
 // --- Shared Input Style ---
 const inputClass = "w-full px-4 py-3.5 bg-[#0e0e0e] border border-white/10 focus:border-primary/60 outline-none text-sm font-body transition-colors placeholder:text-white/20";
@@ -45,13 +45,13 @@ function CreateSheet({ open, onClose, categories, onSaveCategory, onSaveItem }: 
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [catName, setCatName] = useState("");
   const [itemForm, setItemForm] = useState<Partial<MenuItem> & { ingredientsText?: string; categoryId?: string }>({
-    name: "", description: "", price: 0, image: "", popular: false, ingredientsText: "", categoryId: categories[0]?.id || ""
+    name: "", description: "", price: 0, image: "", popular: false, ingredientsText: "", categoryId: categories[0]?.id || "", imageAspectRatio: 16 / 9
   });
 
   useEffect(() => {
     if (open) {
       setCatName("");
-      setItemForm({ name: "", description: "", price: 0, image: "", popular: false, ingredientsText: "", categoryId: categories[0]?.id || "" });
+      setItemForm({ name: "", description: "", price: 0, image: "", popular: false, ingredientsText: "", categoryId: categories[0]?.id || "", imageAspectRatio: 16 / 9 });
       setActiveTab("item");
     }
   }, [open, categories]);
@@ -73,7 +73,7 @@ function CreateSheet({ open, onClose, categories, onSaveCategory, onSaveItem }: 
       onSaveItem(itemForm.categoryId, {
         id: `item-${Date.now()}`, name: itemForm.name.trim(), description: itemForm.description || undefined,
         price: Number(itemForm.price) || 0, image: itemForm.image || "https://placehold.co/400x300/1a1a1a/D4AF37?text=Menu+Item",
-        popular: itemForm.popular, ingredients,
+        popular: itemForm.popular, ingredients, imageAspectRatio: itemForm.imageAspectRatio
       });
       onClose();
     }
@@ -125,24 +125,29 @@ function CreateSheet({ open, onClose, categories, onSaveCategory, onSaveItem }: 
                       <>
                         <div>
                           <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-white/40 mb-2">Category</label>
-                          <select value={itemForm.categoryId} onChange={(e) => setItemForm({...itemForm, categoryId: e.target.value})} className={`${inputClass} appearance-none`}>
+                          <select value={itemForm.categoryId} onChange={(e) => setItemForm({ ...itemForm, categoryId: e.target.value })} className={`${inputClass} appearance-none`}>
                             {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                           </select>
                         </div>
                         <div>
                           <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-white/40 mb-2">Name</label>
-                          <input type="text" value={itemForm.name} onChange={(e) => setItemForm({...itemForm, name: e.target.value})} className={inputClass} placeholder="Nasi Goreng" required />
+                          <input type="text" value={itemForm.name} onChange={(e) => setItemForm({ ...itemForm, name: e.target.value })} className={inputClass} placeholder="Nasi Goreng" required />
                         </div>
                         <div>
                           <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-white/40 mb-2">Price (IDR)</label>
-                          <input type="number" value={itemForm.price || ""} onChange={(e) => setItemForm({...itemForm, price: Number(e.target.value)})} className={inputClass} placeholder="25000" required />
+                          <input type="number" value={itemForm.price || ""} onChange={(e) => setItemForm({ ...itemForm, price: Number(e.target.value) })} className={inputClass} placeholder="25000" required />
                         </div>
                         <div>
                           <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-white/40 mb-2">Description</label>
-                          <input type="text" value={itemForm.description || ""} onChange={(e) => setItemForm({...itemForm, description: e.target.value})} className={inputClass} placeholder="Optional" />
+                          <input type="text" value={itemForm.description || ""} onChange={(e) => setItemForm({ ...itemForm, description: e.target.value })} className={inputClass} placeholder="Optional" />
                         </div>
-                        <ImageUpload value={itemForm.image || ""} onChange={(url) => setItemForm({...itemForm, image: url})} />
-                        <button type="button" onClick={() => setItemForm({...itemForm, popular: !itemForm.popular})}
+                        <ImageUpload
+                          value={itemForm.image || ""}
+                          onChange={(url) => setItemForm({ ...itemForm, image: url })}
+                          aspect={itemForm.imageAspectRatio}
+                          onAspectChange={(aspect) => setItemForm({ ...itemForm, imageAspectRatio: aspect })}
+                        />
+                        <button type="button" onClick={() => setItemForm({ ...itemForm, popular: !itemForm.popular })}
                           className={`w-full flex items-center justify-between px-4 py-4 border transition-all ${itemForm.popular ? "bg-primary/10 border-primary/40" : "bg-[#0e0e0e] border-white/10"}`}
                         >
                           <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/60">Popular</span>
@@ -184,8 +189,8 @@ function EditItemSheet({ item, categoryId, onClose, onSave, onDelete }: {
   onSave: (catId: string, itemId: string, data: Partial<MenuItem>) => void;
   onDelete: (catId: string, itemId: string) => void;
 }) {
-  const [form, setForm] = useState<Partial<MenuItem> & { ingredientsText?: string }>({});
-  useEffect(() => { if (item) setForm({ ...item, ingredientsText: item.ingredients?.join(", ") || "" }); }, [item]);
+  const [form, setForm] = useState<Partial<MenuItem> & { ingredientsText?: string }>({ imageAspectRatio: 16 / 9 });
+  useEffect(() => { if (item) setForm({ ...item, ingredientsText: item.ingredients?.join(", ") || "", imageAspectRatio: item.imageAspectRatio || 16 / 9 }); }, [item]);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -209,7 +214,7 @@ function EditItemSheet({ item, categoryId, onClose, onSave, onDelete }: {
             <div className="flex justify-center pt-3 pb-1"><div className="w-8 h-0.5 bg-white/20" /></div>
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
               <h3 className="font-display text-sm tracking-[0.15em] uppercase">Edit Item</h3>
-              <button onClick={() => { if(confirm("Delete this item?")) { onDelete(categoryId, item.id); onClose(); } }} className="p-2 text-white/30 hover:text-red-400 transition-colors">
+              <button onClick={() => { if (confirm("Delete this item?")) { onDelete(categoryId, item.id); onClose(); } }} className="p-2 text-white/30 hover:text-red-400 transition-colors">
                 <IconTrash />
               </button>
             </div>
@@ -217,18 +222,23 @@ function EditItemSheet({ item, categoryId, onClose, onSave, onDelete }: {
               <form onSubmit={handleSave} className="space-y-5">
                 <div>
                   <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-white/40 mb-2">Name</label>
-                  <input type="text" value={form.name || ""} onChange={(e) => setForm({...form, name: e.target.value})} className={inputClass} required />
+                  <input type="text" value={form.name || ""} onChange={(e) => setForm({ ...form, name: e.target.value })} className={inputClass} required />
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-white/40 mb-2">Price (IDR)</label>
-                  <input type="number" value={form.price || ""} onChange={(e) => setForm({...form, price: Number(e.target.value)})} className={inputClass} required />
+                  <input type="number" value={form.price || ""} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} className={inputClass} required />
                 </div>
-                <ImageUpload value={form.image || ""} onChange={(url) => setForm({...form, image: url})} />
+                <ImageUpload
+                  value={form.image || ""}
+                  onChange={(url) => setForm({ ...form, image: url })}
+                  aspect={form.imageAspectRatio}
+                  onAspectChange={(aspect) => setForm({ ...form, imageAspectRatio: aspect })}
+                />
                 <div>
                   <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-white/40 mb-2">Description</label>
-                  <input type="text" value={form.description || ""} onChange={(e) => setForm({...form, description: e.target.value})} className={inputClass} />
+                  <input type="text" value={form.description || ""} onChange={(e) => setForm({ ...form, description: e.target.value })} className={inputClass} />
                 </div>
-                <button type="button" onClick={() => setForm({...form, popular: !form.popular})}
+                <button type="button" onClick={() => setForm({ ...form, popular: !form.popular })}
                   className={`w-full flex items-center justify-between px-4 py-4 border transition-all ${form.popular ? "bg-primary/10 border-primary/40" : "bg-[#0e0e0e] border-white/10"}`}
                 >
                   <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/60">Popular</span>
@@ -288,7 +298,7 @@ export default function AdminPage() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="relative z-10 w-full max-w-xs px-6">
           <div className="mb-12">
             <div className="w-1 h-8 bg-primary mb-6" />
-            <h1 className="font-display text-3xl font-bold tracking-tighter uppercase text-white leading-none">Admin<br/><span className="text-primary">Panel</span></h1>
+            <h1 className="font-display text-3xl font-bold tracking-tighter uppercase text-white leading-none">Admin<br /><span className="text-primary">Panel</span></h1>
           </div>
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
@@ -409,7 +419,7 @@ export default function AdminPage() {
           <div>
             <div className="mb-8">
               <p className="text-[10px] uppercase tracking-[0.3em] text-white/30 mb-1">{categories.length} Categories</p>
-              <h2 className="font-display text-3xl font-bold tracking-tighter uppercase">Menu<br/><span className="text-primary">Management</span></h2>
+              <h2 className="font-display text-3xl font-bold tracking-tighter uppercase">Menu<br /><span className="text-primary">Management</span></h2>
             </div>
 
             <div className="grid grid-cols-2 gap-[1px] bg-white/5">

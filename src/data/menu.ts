@@ -6,6 +6,7 @@ export interface MenuItem {
     price: number;
     image?: string;
     popular?: boolean;
+    imageAspectRatio?: number;
 }
 
 export interface Category {

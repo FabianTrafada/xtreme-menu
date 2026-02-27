@@ -10,16 +10,17 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const sql = getDb();
     const { id } = await params;
     const body = await req.json();
-    const { name, description, price, image, popular, ingredients } = body;
+    const { name, description, price, image, popular, ingredients, image_aspect_ratio } = body;
 
     await sql`
       UPDATE menu_items 
       SET name = ${name}, description = ${description || null}, price = ${price || 0}, 
-          image = ${image || null}, popular = ${popular || false}, ingredients = ${ingredients || null}
+          image = ${image || null}, popular = ${popular || false}, ingredients = ${ingredients || null},
+          image_aspect_ratio = ${image_aspect_ratio || 1.777}
       WHERE id = ${id}
     `;
 
-    return NextResponse.json({ id, name, description, price, image, popular, ingredients });
+    return NextResponse.json({ id, name, description, price, image, popular, ingredients, image_aspect_ratio });
   } catch (error) {
     console.error("Failed to update item:", error);
     return NextResponse.json({ error: "Failed to update item" }, { status: 500 });

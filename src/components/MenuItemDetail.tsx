@@ -3,23 +3,50 @@
 import { MenuItem } from "@/data/menu";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { Heart, Minus, Plus, ShoppingCart } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useShop } from "@/context/ShopContext";
+import { Heart } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 interface MenuItemDetailProps {
     item: MenuItem | null;
     onClose: () => void;
 }
 
-export default function MenuItemDetail({ item, onClose }: MenuItemDetailProps) {
-    const { addToCart, toggleFavorite, isFavorite } = useShop();
-    const [quantity, setQuantity] = useState(1);
+const FAVORITES_KEY = "xtreme-menu:favorites";
+const LIST_KEY = "xtreme-menu:list";
 
-    // Reset quantity when item changes
+const readStoredIds = (key: string) => {
+    if (typeof window === "undefined") return [] as string[];
+    try {
+        const raw = window.localStorage.getItem(key);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch {
+        return [] as string[];
+    }
+};
+
+const writeStoredIds = (key: string, ids: string[]) => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(key, JSON.stringify(ids));
+};
+
+export default function MenuItemDetail({ item, onClose }: MenuItemDetailProps) {
+    const [isFavorite, setIsFavorite] = useState(false);
+    const [isInList, setIsInList] = useState(false);
+
+    // Sync state from localStorage when item changes
     useEffect(() => {
-        setQuantity(1);
+        if (!item) return;
+        const favoriteIds = readStoredIds(FAVORITES_KEY);
+        const listIds = readStoredIds(LIST_KEY);
+        setIsFavorite(favoriteIds.includes(item.id));
+        setIsInList(listIds.includes(item.id));
     }, [item]);
+
+    const favoriteLabel = useMemo(() => {
+        return isFavorite ? "Remove from favorites" : "Add to favorites";
+    }, [isFavorite]);
 
     // Prevent body scroll when modal is open
     useEffect(() => {
@@ -80,7 +107,10 @@ export default function MenuItemDetail({ item, onClose }: MenuItemDetailProps) {
 
                         {/* Image */}
                         {item.image && (
-                            <div className="relative w-full aspect-video shrink-0 bg-secondary/30">
+                            <div
+                                className="relative w-full shrink-0 bg-secondary/30"
+                                style={{ aspectRatio: item.imageAspectRatio || 16 / 9 }}
+                            >
                                 <Image
                                     src={item.image}
                                     alt={item.name}
@@ -125,7 +155,7 @@ export default function MenuItemDetail({ item, onClose }: MenuItemDetailProps) {
                                     </h4>
                                     <div className="flex flex-wrap gap-2">
                                         {item.ingredients.map((ingredient, index) => (
-                                            <span 
+                                            <span
                                                 key={index}
                                                 className="px-3 py-1 bg-secondary/50 text-secondary-foreground rounded-full text-sm font-medium"
                                             >
@@ -138,57 +168,44 @@ export default function MenuItemDetail({ item, onClose }: MenuItemDetailProps) {
                         </div>
 
                         {/* Actions */}
-                        <div className="p-6 border-t border-border bg-card flex flex-col gap-4 z-10">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3 bg-secondary/30 rounded-lg p-1">
-                                    <button
-                                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                                        className="p-2 hover:bg-secondary rounded-md transition-colors disabled:opacity-50"
-                                        disabled={quantity <= 1}
-                                    >
-                                        <Minus className="w-4 h-4" />
-                                    </button>
-                                    <span className="font-semibold w-8 text-center">{quantity}</span>
-                                    <button
-                                        onClick={() => setQuantity(quantity + 1)}
-                                        className="p-2 hover:bg-secondary rounded-md transition-colors"
-                                    >
-                                        <Plus className="w-4 h-4" />
-                                    </button>
-                                </div>
-                                <div className="text-lg font-bold text-primary">
-                                    {item && formatPrice(item.price * quantity)}
-                                </div>
-                            </div>
-
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={() => item && toggleFavorite(item.id)}
-                                    className={`p-3.5 rounded-xl border transition-colors active:scale-95 flex items-center justify-center ${
-                                        item && isFavorite(item.id)
-                                            ? "border-red-500 bg-red-50 text-red-500"
-                                            : "border-border text-muted-foreground hover:bg-secondary hover:text-foreground"
+                        <div className="p-6 border-t border-border bg-card flex gap-3 z-10">
+                            <button
+                                onClick={() => {
+                                    if (!item) return;
+                                    const current = readStoredIds(FAVORITES_KEY);
+                                    const next = isFavorite
+                                        ? current.filter((id) => id !== item.id)
+                                        : Array.from(new Set([...current, item.id]));
+                                    writeStoredIds(FAVORITES_KEY, next);
+                                    setIsFavorite(!isFavorite);
+                                }}
+                                className={`p-3.5 rounded-xl border transition-colors active:scale-95 flex items-center justify-center ${isFavorite
+                                        ? "border-red-500 bg-red-50 text-red-500"
+                                        : "border-border text-muted-foreground hover:bg-secondary hover:text-foreground"
                                     }`}
-                                >
-                                    <Heart
-                                        className="h-5 w-5"
-                                        fill={item && isFavorite(item.id) ? "currentColor" : "none"}
-                                    />
-                                </button>
+                                aria-label={favoriteLabel}
+                            >
+                                <Heart
+                                    className="h-5 w-5"
+                                    fill={isFavorite ? "currentColor" : "none"}
+                                />
+                            </button>
 
-                                <button
-                                    onClick={() => {
-                                        if (item) {
-                                            addToCart(item, quantity);
-                                            onClose();
-                                        }
-                                    }}
-                                    className="flex-1 py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold text-lg hover:bg-primary/90 transition-colors active:scale-[0.98] flex items-center justify-center gap-2"
-                                >
-                                    <ShoppingCart className="w-5 h-5" />
-                                    Add to Cart
-                                </button>
-                            </div>
+                            <button
+                                onClick={() => {
+                                    if (!item) return;
+                                    const current = readStoredIds(LIST_KEY);
+                                    if (!current.includes(item.id)) {
+                                        const next = [...current, item.id];
+                                        writeStoredIds(LIST_KEY, next);
+                                        setIsInList(true);
+                                    }
+                                    onClose();
+                                }}
+                                className="flex-1 py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold text-lg hover:bg-primary/90 transition-colors active:scale-[0.98] flex items-center justify-center gap-2"
+                            >
+                                {isInList ? "Added to List" : "Add to List"}
+                            </button>
                         </div>
                     </motion.div>
                 </>

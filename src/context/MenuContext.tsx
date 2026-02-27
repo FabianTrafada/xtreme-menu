@@ -115,6 +115,7 @@ export function MenuProvider({ children }: { children: ReactNode }) {
           image: item.image,
           popular: item.popular,
           ingredients: item.ingredients,
+          image_aspect_ratio: item.imageAspectRatio,
         }),
       });
       if (!res.ok) await refreshMenu();
@@ -133,11 +134,11 @@ export function MenuProvider({ children }: { children: ReactNode }) {
       cats.map((cat) =>
         cat.id === categoryId
           ? {
-              ...cat,
-              items: cat.items.map((item) =>
-                item.id === itemId ? { ...item, ...updatedItem } : item
-              ),
-            }
+            ...cat,
+            items: cat.items.map((item) =>
+              item.id === itemId ? { ...item, ...updatedItem } : item
+            ),
+          }
           : cat
       )
     );
@@ -145,7 +146,10 @@ export function MenuProvider({ children }: { children: ReactNode }) {
       const res = await fetch(`/api/items/${itemId}`, {
         method: "PUT",
         headers: authHeaders(),
-        body: JSON.stringify(updatedItem),
+        body: JSON.stringify({
+          ...updatedItem,
+          image_aspect_ratio: updatedItem.imageAspectRatio
+        }),
       });
       if (!res.ok) setCategories(prev);
     } catch {

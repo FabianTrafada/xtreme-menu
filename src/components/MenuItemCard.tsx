@@ -23,7 +23,10 @@ export default function MenuItemCard({ item, onClick }: { item: MenuItem; onClic
             className="group relative bg-[#0a0a0a] border border-white/5 overflow-hidden cursor-pointer"
         >
             {/* Image Section */}
-            <div className="relative aspect-[4/3] overflow-hidden bg-white/5">
+            <div
+                className="relative overflow-hidden bg-white/5"
+                style={{ aspectRatio: item.imageAspectRatio || 16 / 9 }}
+            >
                 {item.image ? (
                     <Image
                         src={item.image}
@@ -36,7 +39,7 @@ export default function MenuItemCard({ item, onClick }: { item: MenuItem; onClic
                         XM
                     </div>
                 )}
-                
+
                 {/* Popular Badge */}
                 {item.popular && (
                     <div className="absolute top-0 right-0 bg-primary text-black text-[10px] font-bold tracking-widest uppercase px-3 py-1 z-10">
@@ -59,7 +62,7 @@ export default function MenuItemCard({ item, onClick }: { item: MenuItem; onClic
                         {formatPrice(item.price)}
                     </span>
                 </div>
-                
+
                 <p className="text-xs text-white/40 font-body leading-relaxed line-clamp-2 mb-4 group-hover:text-white/70 transition-colors">
                     {item.description || "Premium selection, chef's recommendation."}
                 </p>
