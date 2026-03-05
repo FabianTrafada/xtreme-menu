@@ -3,17 +3,16 @@
 import { useShop } from "@/context/ShopContext";
 import { ShoppingCart } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import CartSheet from "./CartSheet";
 
 export default function FloatingCart() {
-    const { cartCount, cartTotal } = useShop();
-    const [isVisible, setIsVisible] = useState(false);
+    const { cartCount, cartTotal, isLoaded } = useShop();
     const [isSheetOpen, setIsSheetOpen] = useState(false);
 
-    useEffect(() => {
-        setIsVisible(cartCount > 0);
-    }, [cartCount]);
+    if (!isLoaded) return null;
+
+    const isVisible = cartCount > 0;
 
     const formatPrice = (price: number) => {
         return new Intl.NumberFormat("id-ID", {

@@ -1,9 +1,10 @@
 "use client";
 
+import { useShop } from "@/context/ShopContext";
 import { MenuItem } from "@/data/menu";
 import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
 import { Heart } from "lucide-react";
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 
 interface MenuItemDetailProps {
@@ -11,42 +12,22 @@ interface MenuItemDetailProps {
     onClose: () => void;
 }
 
-const FAVORITES_KEY = "xtreme-menu:favorites";
-const LIST_KEY = "xtreme-menu:list";
-
-const readStoredIds = (key: string) => {
-    if (typeof window === "undefined") return [] as string[];
-    try {
-        const raw = window.localStorage.getItem(key);
-        if (!raw) return [];
-        const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed : [];
-    } catch {
-        return [] as string[];
-    }
-};
-
-const writeStoredIds = (key: string, ids: string[]) => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(key, JSON.stringify(ids));
-};
-
 export default function MenuItemDetail({ item, onClose }: MenuItemDetailProps) {
-    const [isFavorite, setIsFavorite] = useState(false);
-    const [isInList, setIsInList] = useState(false);
+    const { addToCart, cart, toggleFavorite, isFavorite } = useShop();
 
-    // Sync state from localStorage when item changes
-    useEffect(() => {
-        if (!item) return;
-        const favoriteIds = readStoredIds(FAVORITES_KEY);
-        const listIds = readStoredIds(LIST_KEY);
-        setIsFavorite(favoriteIds.includes(item.id));
-        setIsInList(listIds.includes(item.id));
-    }, [item]);
+    const isInCart = useMemo(() => {
+        if (!item) return false;
+        return cart.some((cartItem) => cartItem.item.id === item.id);
+    }, [cart, item]);
+
+    const isCurrentFavorite = useMemo(() => {
+        if (!item) return false;
+        return isFavorite(item.id);
+    }, [isFavorite, item]);
 
     const favoriteLabel = useMemo(() => {
-        return isFavorite ? "Remove from favorites" : "Add to favorites";
-    }, [isFavorite]);
+        return isCurrentFavorite ? "Remove from favorites" : "Add to favorites";
+    }, [isCurrentFavorite]);
 
     // Prevent body scroll when modal is open
     useEffect(() => {
@@ -172,14 +153,9 @@ export default function MenuItemDetail({ item, onClose }: MenuItemDetailProps) {
                             <button
                                 onClick={() => {
                                     if (!item) return;
-                                    const current = readStoredIds(FAVORITES_KEY);
-                                    const next = isFavorite
-                                        ? current.filter((id) => id !== item.id)
-                                        : Array.from(new Set([...current, item.id]));
-                                    writeStoredIds(FAVORITES_KEY, next);
-                                    setIsFavorite(!isFavorite);
+                                    toggleFavorite(item.id);
                                 }}
-                                className={`p-3.5 rounded-xl border transition-colors active:scale-95 flex items-center justify-center ${isFavorite
+                                className={`p-3.5 rounded-xl border transition-colors active:scale-95 flex items-center justify-center ${isCurrentFavorite
                                         ? "border-red-500 bg-red-50 text-red-500"
                                         : "border-border text-muted-foreground hover:bg-secondary hover:text-foreground"
                                     }`}
@@ -187,24 +163,19 @@ export default function MenuItemDetail({ item, onClose }: MenuItemDetailProps) {
                             >
                                 <Heart
                                     className="h-5 w-5"
-                                    fill={isFavorite ? "currentColor" : "none"}
+                                    fill={isCurrentFavorite ? "currentColor" : "none"}
                                 />
                             </button>
 
                             <button
                                 onClick={() => {
                                     if (!item) return;
-                                    const current = readStoredIds(LIST_KEY);
-                                    if (!current.includes(item.id)) {
-                                        const next = [...current, item.id];
-                                        writeStoredIds(LIST_KEY, next);
-                                        setIsInList(true);
-                                    }
+                                    addToCart(item);
                                     onClose();
                                 }}
                                 className="flex-1 py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold text-lg hover:bg-primary/90 transition-colors active:scale-[0.98] flex items-center justify-center gap-2"
                             >
-                                {isInList ? "Added to List" : "Add to List"}
+                                {isInCart ? "Add More to Cart" : "Add to Cart"}
                             </button>
                         </div>
                     </motion.div>

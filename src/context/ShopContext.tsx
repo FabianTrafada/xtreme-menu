@@ -20,6 +20,7 @@ interface ShopContextType {
     isFavorite: (itemId: string) => boolean;
     cartTotal: number;
     cartCount: number;
+    isLoaded: boolean;
 }
 
 const ShopContext = createContext<ShopContextType | undefined>(undefined);
@@ -125,6 +126,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
                 isFavorite,
                 cartTotal,
                 cartCount,
+                isLoaded,
             }}
         >
             {children}

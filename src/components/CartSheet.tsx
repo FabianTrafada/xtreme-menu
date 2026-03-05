@@ -51,19 +51,6 @@ export default function CartSheet({ isOpen, onClose }: CartSheetProps) {
         }).format(price);
     };
 
-    const handleCheckout = () => {
-        // Construct WhatsApp message
-        const phoneNumber = "6281234567890"; // Replace with actual number
-        const header = "Halo X-treme Shoot Billiard & Cafe, saya ingin memesan:\n\n";
-        const items = cart.map((item, index) => 
-            `${index + 1}. ${item.item.name} (${item.quantity}x) - ${formatPrice(item.item.price * item.quantity)}${item.notes ? `\n   Note: ${item.notes}` : ""}`
-        ).join("\n");
-        const footer = `\n\nTotal: ${formatPrice(cartTotal)}`;
-        
-        const message = encodeURIComponent(header + items + footer);
-        window.open(`https://wa.me/${phoneNumber}?text=${message}`, "_blank");
-    };
-
     const variants = isDesktop ? {
         initial: { x: "100%", opacity: 0 },
         animate: { x: 0, opacity: 1 },
@@ -218,12 +205,6 @@ export default function CartSheet({ isOpen, onClose }: CartSheetProps) {
                                         {formatPrice(cartTotal)}
                                     </span>
                                 </div>
-                                <button 
-                                    onClick={handleCheckout}
-                                    className="w-full py-3.5 bg-primary text-primary-foreground rounded-xl font-bold text-lg hover:bg-primary/90 transition-colors active:scale-[0.99]"
-                                >
-                                    Checkout via WhatsApp
-                                </button>
                             </div>
                         )}
                     </motion.div>
