@@ -1,11 +1,34 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useMenu } from "@/context/MenuContext";
 import { Category, MenuItem } from "@/data/menu";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import ImageUpload from "@/components/ImageUpload";
+import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from "recharts";
+
+// --- Types ---
+interface OrderItem {
+  id: string;
+  order_id: string;
+  item_name: string;
+  item_price: number;
+  quantity: number;
+}
+
+interface Order {
+  id: string;
+  table_number: string;
+  customer_name: string;
+  status: string;
+  total: number;
+  payment_type: string | null;
+  midtrans_transaction_id: string | null;
+  created_at: string;
+  updated_at: string;
+  items: OrderItem[];
+}
 
 // --- Icons ---
 const IconPlus = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>;
@@ -13,6 +36,8 @@ const IconX = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="2
 const IconTrash = () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>;
 const IconBack = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" /></svg>;
 const IconArrow = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>;
+const IconRefresh = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" /><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" /></svg>;
+const IconReceipt = () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1z" /><line x1="8" y1="8" x2="16" y2="8" /><line x1="8" y1="12" x2="16" y2="12" /><line x1="8" y1="16" x2="12" y2="16" /></svg>;
 
 // --- Shared Input Style ---
 const inputClass = "w-full px-4 py-3.5 bg-[#0e0e0e] border border-white/10 focus:border-primary/60 outline-none text-sm font-body transition-colors placeholder:text-white/20";
@@ -259,29 +284,335 @@ function EditItemSheet({ item, categoryId, onClose, onSave, onDelete }: {
 }
 
 // ============================
+// ORDER STATUS HELPERS
+// ============================
+const statusColors: Record<string, { bg: string; text: string; border: string }> = {
+  paid: { bg: "bg-emerald-500/10", text: "text-emerald-400", border: "border-emerald-500/30" },
+  pending: { bg: "bg-yellow-500/10", text: "text-yellow-400", border: "border-yellow-500/30" },
+  cancelled: { bg: "bg-red-500/10", text: "text-red-400", border: "border-red-500/30" },
+  challenge: { bg: "bg-orange-500/10", text: "text-orange-400", border: "border-orange-500/30" },
+  refunded: { bg: "bg-purple-500/10", text: "text-purple-400", border: "border-purple-500/30" },
+};
+const getStatusStyle = (s: string) => statusColors[s] || statusColors.pending;
+
+// --- Order Detail Sheet ---
+function OrderDetailSheet({ order, onClose }: { order: Order | null; onClose: () => void }) {
+  const formatPrice = (p: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(p).replace("Rp", "");
+  const formatTime = (d: string) => {
+    const date = new Date(d);
+    return date.toLocaleString("id-ID", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  };
+
+  return (
+    <AnimatePresence>
+      {order && (
+        <div className="fixed inset-0 z-50">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={onClose} />
+          <motion.div
+            initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 30, stiffness: 300 }}
+            className="absolute bottom-0 left-0 right-0 bg-[#0a0a0a] border-t border-white/10 max-h-[85vh] flex flex-col"
+          >
+            <div className="flex justify-center pt-3 pb-1"><div className="w-8 h-0.5 bg-white/20" /></div>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+              <div>
+                <h3 className="font-display text-sm tracking-[0.15em] uppercase">Order Detail</h3>
+                <p className="text-[10px] text-white/30 font-mono mt-0.5">{order.id}</p>
+              </div>
+              <button onClick={onClose} className="p-2 text-white/40 hover:text-white transition-colors">
+                <IconX />
+              </button>
+            </div>
+            <div className="overflow-y-auto px-6 py-6 pb-10 space-y-6">
+              {/* Status & Info */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-white/[0.03] p-4 border border-white/5">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-white/30 mb-1">Status</p>
+                  <span className={`inline-block text-[10px] font-bold uppercase tracking-[0.15em] px-2.5 py-1 border ${getStatusStyle(order.status).bg} ${getStatusStyle(order.status).text} ${getStatusStyle(order.status).border}`}>
+                    {order.status}
+                  </span>
+                </div>
+                <div className="bg-white/[0.03] p-4 border border-white/5">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-white/30 mb-1">Table</p>
+                  <p className="text-lg font-display font-bold text-primary">{order.table_number}</p>
+                </div>
+                <div className="bg-white/[0.03] p-4 border border-white/5">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-white/30 mb-1">Customer</p>
+                  <p className="text-sm font-medium truncate">{order.customer_name}</p>
+                </div>
+                <div className="bg-white/[0.03] p-4 border border-white/5">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-white/30 mb-1">Total</p>
+                  <p className="text-sm font-mono text-primary">IDR{formatPrice(order.total)}</p>
+                </div>
+              </div>
+
+              {/* Time */}
+              <div className="bg-white/[0.03] p-4 border border-white/5">
+                <div className="flex justify-between">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/30 mb-1">Created</p>
+                    <p className="text-xs text-white/60 font-mono">{formatTime(order.created_at)}</p>
+                  </div>
+                  {order.payment_type && (
+                    <div className="text-right">
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-white/30 mb-1">Payment</p>
+                      <p className="text-xs text-white/60 font-mono">{order.payment_type}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Items */}
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.2em] text-white/30 mb-3">Items ({order.items.length})</p>
+                <div className="space-y-1">
+                  {order.items.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between py-3 border-b border-white/5">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm truncate">{item.item_name}</p>
+                        <p className="text-[10px] text-white/30 font-mono">×{item.quantity}</p>
+                      </div>
+                      <p className="text-xs font-mono text-primary ml-4">IDR{formatPrice(item.item_price * item.quantity)}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+// --- Orders Panel ---
+function OrdersPanel() {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(true);
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterDate, setFilterDate] = useState<string>("");
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
+  const formatPrice = (p: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(p).replace("Rp", "");
+  const formatTime = (d: string) => {
+    const date = new Date(d);
+    return date.toLocaleString("id-ID", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+  };
+
+  const fetchOrders = useCallback(async () => {
+    setIsLoadingOrders(true);
+    try {
+      const params = new URLSearchParams();
+      if (filterStatus !== "all") params.set("status", filterStatus);
+      if (filterDate) params.set("date", filterDate);
+      const res = await fetch(`/api/orders?${params.toString()}`, {
+        headers: { Authorization: `Bearer 061225` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setOrders(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch orders:", err);
+    } finally {
+      setIsLoadingOrders(false);
+    }
+  }, [filterStatus, filterDate]);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+
+  // Stats
+  const totalRevenue = orders.filter(o => o.status === "paid").reduce((sum, o) => sum + o.total, 0);
+  const paidCount = orders.filter(o => o.status === "paid").length;
+  const pendingCount = orders.filter(o => o.status === "pending").length;
+
+  // Chart Data
+  const chartData = useMemo(() => {
+    const today = new Date();
+    const data = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const dateStr = d.toLocaleDateString("en-CA"); // YYYY-MM-DD
+      const dayTotal = orders
+        .filter(o => o.status === "paid" && new Date(o.created_at).toLocaleDateString("en-CA") === dateStr)
+        .reduce((sum, o) => sum + o.total, 0);
+      data.push({
+        name: d.toLocaleDateString("id-ID", { day: "numeric", month: "short" }),
+        revenue: dayTotal
+      });
+    }
+    return data;
+  }, [orders]);
+
+  return (
+    <div>
+      {/* Chart */}
+      {!isLoadingOrders && (
+        <div className="mb-8 p-4 bg-white/[0.02] border border-white/5 rounded-xl">
+          <div className="flex items-center justify-between mb-4 px-2">
+            <h3 className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/40">Revenue (Last 7 Days)</h3>
+          </div>
+          <div className="h-48 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData}>
+                <XAxis 
+                  dataKey="name" 
+                  axisLine={false} 
+                  tickLine={false}
+                  tick={{ fill: "#ffffff40", fontSize: 10, fontFamily: "monospace" }}
+                  dy={10}
+                />
+                <Tooltip 
+                  cursor={{ fill: "rgba(255,255,255,0.05)" }}
+                  contentStyle={{ backgroundColor: "#1a1a1a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px" }}
+                  labelStyle={{ color: "#ffffff60", fontSize: "10px", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "2px" }}
+                  itemStyle={{ color: "#D4AF37", fontSize: "12px", fontFamily: "monospace" }}
+                  formatter={(value: number) => [`IDR ${formatPrice(value)}`, "Revenue"]}
+                />
+                <Bar 
+                  dataKey="revenue" 
+                  fill="#D4AF37" 
+                  radius={[4, 4, 0, 0]} 
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
+      {/* Stats Row */}
+      <div className="grid grid-cols-3 gap-px bg-white/5 mb-6">
+        <div className="bg-background p-4 text-center">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-white/30 mb-1">Revenue</p>
+          <p className="text-sm font-mono text-primary font-bold">IDR{formatPrice(totalRevenue)}</p>
+        </div>
+        <div className="bg-background p-4 text-center">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-white/30 mb-1">Paid</p>
+          <p className="text-lg font-display font-bold text-emerald-400">{paidCount}</p>
+        </div>
+        <div className="bg-background p-4 text-center">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-white/30 mb-1">Pending</p>
+          <p className="text-lg font-display font-bold text-yellow-400">{pendingCount}</p>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="flex items-center gap-2 mb-4">
+        <select
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+          className="flex-1 px-3 py-2.5 bg-[#0e0e0e] border border-white/10 text-xs uppercase tracking-widest text-white/60 outline-none appearance-none"
+        >
+          <option value="all">All Status</option>
+          <option value="paid">Paid</option>
+          <option value="pending">Pending</option>
+          <option value="cancelled">Cancelled</option>
+          <option value="refunded">Refunded</option>
+        </select>
+        <input
+          type="date"
+          value={filterDate}
+          onChange={(e) => setFilterDate(e.target.value)}
+          className="px-3 py-2.5 bg-[#0e0e0e] border border-white/10 text-xs text-white/60 outline-none"
+        />
+        <button onClick={fetchOrders} className="p-2.5 bg-[#0e0e0e] border border-white/10 text-white/40 hover:text-primary transition-colors">
+          <IconRefresh />
+        </button>
+      </div>
+
+      {/* Orders List */}
+      {isLoadingOrders ? (
+        <div className="py-20 text-center">
+          <div className="w-5 h-5 border border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-[10px] uppercase tracking-[0.3em] text-white/20 mt-3">Loading orders</p>
+        </div>
+      ) : orders.length === 0 ? (
+        <div className="py-20 text-center">
+          <IconReceipt />
+          <p className="text-white/15 font-display text-lg uppercase tracking-widest mt-2">No Orders</p>
+          <p className="text-white/10 text-xs mt-1">Orders will appear here after checkout</p>
+        </div>
+      ) : (
+        <div className="space-y-1">
+          {orders.map((order, i) => {
+            const style = getStatusStyle(order.status);
+            return (
+              <motion.div
+                key={order.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.03 }}
+                onClick={() => setSelectedOrder(order)}
+                className="group flex items-center gap-4 py-4 border-b border-white/5 cursor-pointer active:bg-white/[0.02] transition-colors -mx-2 px-2"
+              >
+                {/* Table Badge */}
+                <div className="w-11 h-11 bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
+                  <span className="text-primary font-display font-bold text-sm">{order.table_number}</span>
+                </div>
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-medium truncate group-hover:text-primary transition-colors">{order.customer_name}</h4>
+                    <span className={`text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5 border ${style.bg} ${style.text} ${style.border}`}>
+                      {order.status}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-xs text-primary font-mono">IDR{formatPrice(order.total)}</span>
+                    <span className="text-[10px] text-white/20">•</span>
+                    <span className="text-[10px] text-white/30 font-mono">{order.items.length} items</span>
+                    <span className="text-[10px] text-white/20">•</span>
+                    <span className="text-[10px] text-white/30 font-mono">{formatTime(order.created_at)}</span>
+                  </div>
+                </div>
+                <div className="text-white/15 group-hover:text-white/40 transition-colors">
+                  <IconArrow />
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
+
+      <OrderDetailSheet order={selectedOrder} onClose={() => setSelectedOrder(null)} />
+    </div>
+  );
+}
+
+// ============================
 // MAIN ADMIN PAGE
 // ============================
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
+  useEffect(() => {
+    if (typeof window !== "undefined" && localStorage.getItem("xtreme_admin_auth") === "true") {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const { categories, isLoading, addCategory, updateCategory, deleteCategory, addMenuItem, updateMenuItem, deleteMenuItem, resetMenu } = useMenu();
+  const { categories, isLoading, addCategory, updateCategory, deleteCategory, addMenuItem, updateMenuItem, deleteMenuItem } = useMenu();
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   const [isCreateSheetOpen, setIsCreateSheetOpen] = useState(false);
   const [editingItemData, setEditingItemData] = useState<{ item: MenuItem; categoryId: string } | null>(null);
   const [toast, setToast] = useState("");
+  const [adminView, setAdminView] = useState<"menu" | "orders">("menu");
 
   const activeCategory = categories.find((c) => c.id === activeCategoryId) || null;
   const formatPrice = (p: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(p).replace("Rp", "");
 
-  const handleLogin = (e: React.FormEvent) => { e.preventDefault(); if (password === "061225") { setIsAuthenticated(true); setError(""); } else { setError("Access denied"); setPassword(""); } };
+  const handleLogin = (e: React.FormEvent) => { e.preventDefault(); if (password === "061225") { setIsAuthenticated(true); setError(""); localStorage.setItem("xtreme_admin_auth", "true"); } else { setError("Access denied"); setPassword(""); } };
 
   const handleAddCategory = async (name: string) => { await addCategory({ id: name.toLowerCase().replace(/\s+/g, "-") + "-" + Date.now(), name, items: [] }); setToast("Category created"); };
   const handleAddItem = async (catId: string, item: MenuItem) => { await addMenuItem(catId, item); setToast("Item created"); };
   const handleUpdateItem = async (catId: string, itemId: string, data: Partial<MenuItem>) => { await updateMenuItem(catId, itemId, data); setToast("Item updated"); };
   const handleDeleteItem = async (catId: string, itemId: string) => { await deleteMenuItem(catId, itemId); setToast("Item deleted"); };
   const handleDeleteCategory = async (catId: string) => { if (confirm("Delete this category and all its items?")) { await deleteCategory(catId); setActiveCategoryId(null); setToast("Category deleted"); } };
-  const handleSeedDb = async () => { if (confirm("Reset all data to defaults?")) { await resetMenu(); setToast("Database reset"); } };
 
   // =====================
   // LOGIN
@@ -363,16 +694,41 @@ export default function AdminPage() {
                 <h1 className="font-display text-sm tracking-[0.15em] uppercase">Dashboard</h1>
               </div>
               <div className="flex items-center gap-3">
-                <button onClick={handleSeedDb} className="text-[10px] tracking-widest uppercase text-white/20 hover:text-white/50 transition-colors">Reset</button>
-                <button onClick={() => { setIsAuthenticated(false); setPassword(""); }} className="text-[10px] tracking-widest uppercase text-white/40 hover:text-white border border-white/10 px-3 py-1.5 transition-colors">Logout</button>
+                <button onClick={() => { setIsAuthenticated(false); setPassword(""); localStorage.removeItem("xtreme_admin_auth"); }} className="text-[10px] tracking-widest uppercase text-white/40 hover:text-white border border-white/10 px-3 py-1.5 transition-colors">Logout</button>
               </div>
             </>
           )}
         </div>
+        {/* View Toggle - only show when not inside a category */}
+        {!activeCategoryId && (
+          <div className="flex border-t border-white/5">
+            {(["menu", "orders"] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setAdminView(tab)}
+                className={`flex-1 py-3 text-[10px] font-bold tracking-[0.2em] uppercase transition-all relative ${adminView === tab ? "text-primary" : "text-white/30"}`}
+              >
+                {tab === "menu" ? "Menu" : "Orders"}
+                {adminView === tab && (
+                  <motion.div layoutId="adminViewTab" className="absolute bottom-0 left-0 right-0 h-[2px] bg-primary" />
+                )}
+              </button>
+            ))}
+          </div>
+        )}
       </header>
 
       <main className="px-6 py-8">
-        {activeCategoryId && activeCategory ? (
+        {adminView === "orders" && !activeCategoryId ? (
+          /* ---- ORDERS TRACKING ---- */
+          <div>
+            <div className="mb-8">
+              <p className="text-[10px] uppercase tracking-[0.3em] text-white/30 mb-1">Sales Tracking</p>
+              <h2 className="font-display text-3xl font-bold tracking-tighter uppercase">Order<br /><span className="text-primary">History</span></h2>
+            </div>
+            <OrdersPanel />
+          </div>
+        ) : activeCategoryId && activeCategory ? (
           /* ---- ITEMS LIST ---- */
           <div className="space-y-1">
             <div className="flex items-end justify-between mb-6">
@@ -472,14 +828,16 @@ export default function AdminPage() {
         )}
       </main>
 
-      {/* FAB */}
-      <motion.button
-        whileTap={{ scale: 0.85 }}
-        onClick={() => setIsCreateSheetOpen(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-primary text-black flex items-center justify-center z-40 shadow-xl shadow-primary/20 hover:shadow-primary/40 transition-shadow"
-      >
-        <IconPlus />
-      </motion.button>
+      {/* FAB - only show for menu management */}
+      {adminView === "menu" && (
+        <motion.button
+          whileTap={{ scale: 0.85 }}
+          onClick={() => setIsCreateSheetOpen(true)}
+          className="fixed bottom-6 right-6 w-14 h-14 bg-primary text-black flex items-center justify-center z-40 shadow-xl shadow-primary/20 hover:shadow-primary/40 transition-shadow"
+        >
+          <IconPlus />
+        </motion.button>
+      )}
 
       <CreateSheet open={isCreateSheetOpen} onClose={() => setIsCreateSheetOpen(false)} categories={categories} onSaveCategory={handleAddCategory} onSaveItem={handleAddItem} />
       <EditItemSheet item={editingItemData?.item || null} categoryId={editingItemData?.categoryId || ""} onClose={() => setEditingItemData(null)} onSave={handleUpdateItem} onDelete={handleDeleteItem} />

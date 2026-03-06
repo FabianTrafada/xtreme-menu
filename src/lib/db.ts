@@ -41,4 +41,29 @@ export async function initDb() {
     // Column might already exist or other DB issues, ignore in this simple setup
     console.log("Migration check:", e);
   }
+
+  // Orders table for sales tracking
+  await sql`
+    CREATE TABLE IF NOT EXISTS orders (
+      id TEXT PRIMARY KEY,
+      table_number TEXT NOT NULL,
+      customer_name TEXT NOT NULL DEFAULT 'Guest',
+      status TEXT NOT NULL DEFAULT 'pending',
+      total INTEGER NOT NULL DEFAULT 0,
+      payment_type TEXT,
+      midtrans_transaction_id TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS order_items (
+      id TEXT PRIMARY KEY,
+      order_id TEXT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+      item_name TEXT NOT NULL,
+      item_price INTEGER NOT NULL,
+      quantity INTEGER NOT NULL DEFAULT 1
+    )
+  `;
 }

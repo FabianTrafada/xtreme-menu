@@ -5,6 +5,7 @@ import SmoothScroll from "@/components/SmoothScroll";
 import Script from "next/script";
 import { ShopProvider } from "@/context/ShopContext";
 import { MenuProvider } from "@/context/MenuContext";
+import { Toaster } from "react-hot-toast";
 
 const syne = Syne({
   variable: "--font-syne",
@@ -39,8 +40,19 @@ export default function RootLayout({
         <MenuProvider>
           <ShopProvider>
             {children}
+            <Toaster position="bottom-center" />
           </ShopProvider>
         </MenuProvider>
+
+        <Script
+          src={
+            process.env.MIDTRANS_IS_PRODUCTION === "true"
+              ? "https://app.midtrans.com/snap/snap.js"
+              : "https://app.sandbox.midtrans.com/snap/snap.js"
+          }
+          data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY}
+          strategy="lazyOnload"
+        />
       </body>
     </html>
   );

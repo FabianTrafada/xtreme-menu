@@ -5,6 +5,7 @@ import { Minus, Plus, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 interface CartSheetProps {
     isOpen: boolean;
@@ -30,6 +31,84 @@ function useMediaQuery(query: string) {
 export default function CartSheet({ isOpen, onClose }: CartSheetProps) {
     const { cart, removeFromCart, updateQuantity, cartTotal, clearCart } = useShop();
     const isDesktop = useMediaQuery("(min-width: 768px)");
+    const [isCheckingOut, setIsCheckingOut] = useState(false);
+    const [showCheckoutForm, setShowCheckoutForm] = useState(false);
+    const [tableNumber, setTableNumber] = useState("");
+    const [customerName, setCustomerName] = useState("");
+
+    const handleCheckout = async () => {
+        if (cart.length === 0) return;
+        if (!tableNumber.trim()) return;
+        setIsCheckingOut(true);
+
+        try {
+            const orderId = `XTREME-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+            const res = await fetch("/api/payment", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    orderId,
+                    grossAmount: cartTotal,
+                    tableNumber: tableNumber.trim(),
+                    customerName: customerName.trim() || "Guest",
+                    items: cart.map((c) => ({
+                        name: c.item.name,
+                        price: c.item.price,
+                        quantity: c.quantity,
+                    })),
+                }),
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Failed to create transaction");
+
+            // Close the cart sheet before showing Snap popup
+            setShowCheckoutForm(false);
+            setTableNumber("");
+            setCustomerName("");
+            onClose();
+
+            window.snap.pay(data.token, {
+                onSuccess: async () => {
+                    // Update order status to paid in our DB
+                    try {
+                        await fetch(`/api/orders/${orderId}`, {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ status: "paid" }),
+                        });
+                    } catch (e) {
+                        console.error("Failed to update order status:", e);
+                    }
+                    clearCart();
+                    toast.success("Payment successful! Thank you for your order.");
+                },
+                onPending: async () => {
+                    toast.loading("Payment pending. Please complete your payment.", { duration: 4000 });
+                },
+                onError: async () => {
+                    try {
+                        await fetch(`/api/orders/${orderId}`, {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ status: "cancelled" }),
+                        });
+                    } catch (e) {
+                        console.error("Failed to update order status:", e);
+                    }
+                    toast.error("Payment failed. Please try again.");
+                },
+                onClose: () => {
+                    // User closed the popup without finishing payment
+                },
+            });
+        } catch (error) {
+            console.error("Checkout error:", error);
+            toast.error("Failed to initiate payment. Please try again.");
+        } finally {
+            setIsCheckingOut(false);
+        }
+    };
 
     // Prevent body scroll when sheet is open
     useEffect(() => {
@@ -198,13 +277,61 @@ export default function CartSheet({ isOpen, onClose }: CartSheetProps) {
 
                         {/* Footer Summary */}
                         {cart.length > 0 && (
-                            <div className="p-6 bg-card border-t border-border space-y-8 pb-12 md:pb-8">
+                            <div className="p-6 bg-card border-t border-border space-y-4 pb-12 md:pb-8">
                                 <div className="flex justify-between items-center text-lg">
                                     <span className="text-muted-foreground">Total Payment</span>
                                     <span className="font-bold text-primary text-lg">
                                         {formatPrice(cartTotal)}
                                     </span>
                                 </div>
+
+                                {showCheckoutForm ? (
+                                    <div className="space-y-3">
+                                        <div>
+                                            <label className="text-sm font-medium text-muted-foreground mb-1 block">Table Number <span className="text-red-500">*</span></label>
+                                            <input
+                                                type="text"
+                                                value={tableNumber}
+                                                onChange={(e) => setTableNumber(e.target.value)}
+                                                placeholder="e.g. 5, VIP-1"
+                                                className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+                                                autoFocus
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-sm font-medium text-muted-foreground mb-1 block">Your Name <span className="text-muted-foreground/50">(optional)</span></label>
+                                            <input
+                                                type="text"
+                                                value={customerName}
+                                                onChange={(e) => setCustomerName(e.target.value)}
+                                                placeholder="e.g. Budi"
+                                                className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+                                            />
+                                        </div>
+                                        <div className="flex gap-3 pt-1">
+                                            <button
+                                                onClick={() => setShowCheckoutForm(false)}
+                                                className="flex-1 py-3 rounded-xl border border-border font-semibold text-muted-foreground hover:bg-secondary transition-colors"
+                                            >
+                                                Back
+                                            </button>
+                                            <button
+                                                onClick={handleCheckout}
+                                                disabled={isCheckingOut || !tableNumber.trim()}
+                                                className="flex-[2] py-3 bg-primary text-primary-foreground rounded-xl font-bold text-lg hover:bg-primary/90 transition-colors active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                {isCheckingOut ? "Processing..." : "Pay Now"}
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={() => setShowCheckoutForm(true)}
+                                        className="w-full py-3.5 bg-primary text-primary-foreground rounded-xl font-bold text-lg hover:bg-primary/90 transition-colors active:scale-[0.99]"
+                                    >
+                                        Checkout
+                                    </button>
+                                )}
                             </div>
                         )}
                     </motion.div>
