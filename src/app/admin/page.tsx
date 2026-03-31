@@ -39,6 +39,13 @@ const IconArrow = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" heigh
 const IconRefresh = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" /><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" /></svg>;
 const IconReceipt = () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1z" /><line x1="8" y1="8" x2="16" y2="8" /><line x1="8" y1="12" x2="16" y2="12" /><line x1="8" y1="16" x2="12" y2="16" /></svg>;
 
+const IconEdit = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 20h9" />
+    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4 11.5-11.5z" />
+  </svg>
+);
+
 // --- Shared Input Style ---
 const inputClass = "w-full px-4 py-3.5 bg-[#0e0e0e] border border-white/10 focus:border-primary/60 outline-none text-sm font-body transition-colors placeholder:text-white/20";
 
@@ -283,6 +290,76 @@ function EditItemSheet({ item, categoryId, onClose, onSave, onDelete }: {
   );
 }
 
+// --- Edit Category Sheet ---
+function EditCategorySheet({ category, onClose, onSave }: {
+  category: Category | null; onClose: () => void;
+  onSave: (categoryId: string, name: string) => void;
+}) {
+  const [name, setName] = useState("");
+
+  useEffect(() => {
+    if (category) setName(category.name);
+  }, [category]);
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (category && name.trim()) {
+      onSave(category.id, name.trim());
+      onClose();
+    }
+  };
+
+  return (
+    <AnimatePresence>
+      {category && (
+        <div className="fixed inset-0 z-50">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/70 backdrop-blur-md"
+            onClick={onClose}
+          />
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 30, stiffness: 300 }}
+            className="absolute bottom-0 left-0 right-0 bg-[#0a0a0a] border-t border-white/10 max-h-[92vh] flex flex-col"
+          >
+            <div className="flex justify-center pt-3 pb-1"><div className="w-8 h-0.5 bg-white/20" /></div>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+              <h3 className="font-display text-sm tracking-[0.15em] uppercase">Edit Category</h3>
+              <button onClick={onClose} className="p-2 text-white/30 hover:text-white/70 transition-colors">
+                <IconX />
+              </button>
+            </div>
+            <div className="overflow-y-auto px-6 py-6 pb-10">
+              <form onSubmit={handleSave} className="space-y-5">
+                <div>
+                  <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-white/40 mb-2">Category Name</label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className={inputClass}
+                    placeholder="e.g. Desserts"
+                    required
+                    autoFocus
+                  />
+                </div>
+                <button type="submit" className="w-full bg-primary text-black font-display text-sm font-bold tracking-[0.15em] uppercase py-4 active:scale-[0.98] transition-transform">
+                  Save Changes
+                </button>
+              </form>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 // ============================
 // ORDER STATUS HELPERS
 // ============================
@@ -393,7 +470,28 @@ function OrdersPanel() {
   const [filterDate, setFilterDate] = useState<string>("");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
-  const formatPrice = (p: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(p).replace("Rp", "");
+  // Recharts can pass different value shapes (number/string/undefined, and sometimes arrays for stacked values).
+  const formatPrice = (p: unknown) => {
+    const toNumber = (v: unknown): number => {
+      if (typeof v === "number") return Number.isFinite(v) ? v : 0;
+      if (typeof v === "string") {
+        const n = Number(v);
+        return Number.isFinite(n) ? n : 0;
+      }
+      if (typeof v === "bigint") return Number.isFinite(Number(v)) ? Number(v) : 0;
+      if (Array.isArray(v)) return toNumber(v[0]);
+      return 0;
+    };
+
+    const safeNum = toNumber(p);
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    })
+      .format(safeNum)
+      .replace("Rp", "");
+  };
   const formatTime = (d: string) => {
     const date = new Date(d);
     return date.toLocaleString("id-ID", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
@@ -470,7 +568,7 @@ function OrdersPanel() {
                   contentStyle={{ backgroundColor: "#1a1a1a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px" }}
                   labelStyle={{ color: "#ffffff60", fontSize: "10px", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "2px" }}
                   itemStyle={{ color: "#D4AF37", fontSize: "12px", fontFamily: "monospace" }}
-                  formatter={(value: number) => [`IDR ${formatPrice(value)}`, "Revenue"]}
+                  formatter={(value) => [`IDR ${formatPrice(value)}`, "Revenue"]}
                 />
                 <Bar 
                   dataKey="revenue" 
@@ -600,6 +698,7 @@ export default function AdminPage() {
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   const [isCreateSheetOpen, setIsCreateSheetOpen] = useState(false);
   const [editingItemData, setEditingItemData] = useState<{ item: MenuItem; categoryId: string } | null>(null);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [toast, setToast] = useState("");
   const [adminView, setAdminView] = useState<"menu" | "orders">("menu");
 
@@ -611,6 +710,7 @@ export default function AdminPage() {
   const handleAddCategory = async (name: string) => { await addCategory({ id: name.toLowerCase().replace(/\s+/g, "-") + "-" + Date.now(), name, items: [] }); setToast("Category created"); };
   const handleAddItem = async (catId: string, item: MenuItem) => { await addMenuItem(catId, item); setToast("Item created"); };
   const handleUpdateItem = async (catId: string, itemId: string, data: Partial<MenuItem>) => { await updateMenuItem(catId, itemId, data); setToast("Item updated"); };
+  const handleUpdateCategory = async (catId: string, name: string) => { await updateCategory(catId, { name }); setToast("Category updated"); };
   const handleDeleteItem = async (catId: string, itemId: string) => { await deleteMenuItem(catId, itemId); setToast("Item deleted"); };
   const handleDeleteCategory = async (catId: string) => { if (confirm("Delete this category and all its items?")) { await deleteCategory(catId); setActiveCategoryId(null); setToast("Category deleted"); } };
 
@@ -782,13 +882,21 @@ export default function AdminPage() {
               {categories.map((cat, i) => {
                 const previews = cat.items.filter(it => it.image).slice(0, 4);
                 return (
-                  <motion.button
+                  <motion.div
                     key={cat.id}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: i * 0.04 }}
                     onClick={() => setActiveCategoryId(cat.id)}
-                    className="group bg-background text-left active:bg-white/[0.05] transition-colors relative overflow-hidden aspect-[4/3]"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setActiveCategoryId(cat.id);
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    className="group bg-background text-left active:bg-white/[0.05] transition-colors relative overflow-hidden aspect-[4/3] cursor-pointer outline-none"
                   >
                     {/* Image Mosaic Background */}
                     <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
@@ -817,10 +925,24 @@ export default function AdminPage() {
                       </div>
                     </div>
 
+                    {/* Edit Category */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        setEditingCategory(cat);
+                      }}
+                      className="absolute top-3 right-3 z-20 p-2 rounded-full bg-black/30 border border-white/10 text-white/50 hover:text-primary transition-colors"
+                      aria-label={`Edit ${cat.name}`}
+                    >
+                      <IconEdit />
+                    </button>
+
                     {/* Hover corner accents */}
                     <div className="absolute top-0 right-0 w-0 group-hover:w-8 h-[2px] bg-primary transition-all duration-300 z-10" />
                     <div className="absolute bottom-0 left-0 h-0 group-hover:h-8 w-[2px] bg-primary transition-all duration-300 z-10" />
-                  </motion.button>
+                  </motion.div>
                 );
               })}
             </div>
@@ -841,6 +963,7 @@ export default function AdminPage() {
 
       <CreateSheet open={isCreateSheetOpen} onClose={() => setIsCreateSheetOpen(false)} categories={categories} onSaveCategory={handleAddCategory} onSaveItem={handleAddItem} />
       <EditItemSheet item={editingItemData?.item || null} categoryId={editingItemData?.categoryId || ""} onClose={() => setEditingItemData(null)} onSave={handleUpdateItem} onDelete={handleDeleteItem} />
+      <EditCategorySheet category={editingCategory} onClose={() => setEditingCategory(null)} onSave={handleUpdateCategory} />
       <AnimatePresence>{toast && <Toast message={toast} onDone={() => setToast("")} />}</AnimatePresence>
     </div>
   );
